@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 				printf("MAC Destination: %x:%x:%x:%x:%x:%x\n", destinationMAC[0], destinationMAC[1],destinationMAC[2], destinationMAC[3], destinationMAC[4], destinationMAC[5]);
 				printf("IP Source: %d.%d.%d.%d\n", sourceIP[0],sourceIP[1], sourceIP[2], sourceIP[3]);
 				printf("IP Destination: %d.%d.%d.%d\n", destinationIP[0], destinationIP[1], destinationIP[2], destinationIP[3]);
-				continue;
+				// continue;
 			}
 			//if (buffer_u.cooked_data.ethernet.eth_type == ntohs(ETH_P_IP)){
 				//printf("IP packet, %d bytes - src ip: %d.%d.%d.%d dst ip: %d.%d.%d.%d proto: %d\n",

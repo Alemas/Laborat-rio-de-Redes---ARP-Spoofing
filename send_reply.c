@@ -13,10 +13,11 @@
 
 char this_mac[6];
 char bcast_mac[6] =	{0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-char dst_mac[6] =	{0x00, 0x00, 0x00, 0x22, 0x22, 0x22};
-char src_mac[6] =	{0x00, 0x00, 0x00, 0x33, 0x33, 0x33};
+char dst_mac[6] =	{0x00, 0x00, 0x00, 0xaa, 0x00, 0x00};
+char src_mac[6] =	{0x00, 0x00, 0x00, 0xaa, 0x00, 0x01};
 
 char false_mac[6] = {};
+char src_ip[4] = {10,0,0,21};
 char dst_ip[4] = {10, 0, 0, 20};
 
 union eth_buffer buffer_u;
@@ -74,11 +75,15 @@ int main(int argc, char *argv[])
 	buffer_u.cooked_data.payload.arp.prot_type = htons(ETH_P_IP);
 	buffer_u.cooked_data.payload.arp.hlen = 6;
 	buffer_u.cooked_data.payload.arp.plen = 4;
-	buffer_u.cooked_data.payload.arp.operation = htons(1);
+	buffer_u.cooked_data.payload.arp.operation = htons(2);
+	//MAC Source
 	memcpy(buffer_u.cooked_data.payload.arp.src_hwaddr, src_mac, 6);
-	memcpy(buffer_u.cooked_data.payload.arp.src_paddr, dst_ip, 4);
-	memset(buffer_u.cooked_data.payload.arp.tgt_hwaddr, 0, 6);
-	memset(buffer_u.cooked_data.payload.arp.tgt_paddr, 0, 6);
+	//MAC Destination
+	memcpy(buffer_u.cooked_data.payload.arp.tgt_hwaddr, dst_mac, 6);
+	//IP Source
+	memcpy(buffer_u.cooked_data.payload.arp.src_paddr, src_ip, 4);
+	//IP Destination
+	memcpy(buffer_u.cooked_data.payload.arp.tgt_paddr, dst_ip, 4);
 
 	/* Send it.. */
 	memcpy(socket_address.sll_addr, dst_mac, 6);
