@@ -13,12 +13,12 @@
 
 char this_mac[6];
 char bcast_mac[6] =	{0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-char dst_mac[6] =	{0x00, 0x00, 0x00, 0xaa, 0x00, 0x00};
-char src_mac[6] =	{0x00, 0x00, 0x00, 0xaa, 0x00, 0x01};
+char dst_mac[6] =	{0x00, 0x00, 0x00, 0xaa, 0x00, 0x02};
+char src_mac[6] =	{0x00, 0x00, 0x00, 0xaa, 0x00, 0x00};
 
 char false_mac[6] = {};
-char src_ip[4] = {10,0,0,21};
-char dst_ip[4] = {10, 0, 0, 20};
+char src_ip[4] = {10,0,0,20};
+char dst_ip[4] = {10,0,0,22};
 
 union eth_buffer buffer_u;
 
@@ -66,7 +66,7 @@ int main(int argc, char *argv[])
 	/* To send data (in this case we will cook an ARP packet and broadcast it =])... */
 	
 	/* fill the Ethernet frame header */
-	memcpy(buffer_u.cooked_data.ethernet.dst_addr, bcast_mac, 6);
+	memcpy(buffer_u.cooked_data.ethernet.dst_addr, dst_mac, 6);
 	memcpy(buffer_u.cooked_data.ethernet.src_addr, src_mac, 6);
 	buffer_u.cooked_data.ethernet.eth_type = htons(ETH_P_ARP);
 
