@@ -88,19 +88,41 @@ int main(int argc, char *argv[])
 	while (1){
 		numbytes = recvfrom(sockfd, buffer_u.raw_data, ETH_LEN, 0, NULL, NULL);
 		if (numbytes > 0) {
+			printf("_______________________________________\n");
 			if (buffer_u.cooked_data.ethernet.eth_type == ntohs(ETH_P_ARP)){
 				printf("ARP packet, %d bytes - operation %d\n", numbytes, ntohs(buffer_u.cooked_data.payload.arp.operation));
 				
-				uint8_t *sourceMAC = buffer_u.cooked_data.ethernet.src_addr;
-				uint8_t *destinationMAC = buffer_u.cooked_data.ethernet.dst_addr;
+				uint8_t *e_sourceMAC = buffer_u.cooked_data.ethernet.src_addr;
+				uint8_t *e_destinationMAC = buffer_u.cooked_data.ethernet.dst_addr;
+				uint16_t e_type = htons(buffer_u.cooked_data.ethernet.eth_type);
+
+
+				uint16_t hardware_type = htons(buffer_u.cooked_data.payload.arp.hw_type);
+				uint16_t protocol_type = htons(buffer_u.cooked_data.payload.arp.prot_type);
+				uint8_t h_address_length = buffer_u.cooked_data.payload.arp.hlen;			
+				uint8_t p_address_length = buffer_u.cooked_data.payload.arp.plen;
+				uint16_t arp_operation = htons(buffer_u.cooked_data.payload.arp.operation);
+				uint8_t *a_sourceMAC = buffer_u.cooked_data.payload.arp.src_hwaddr;
+				uint8_t *a_destinationMAC = buffer_u.cooked_data.payload.arp.tgt_hwaddr;
 				uint8_t *sourceIP = buffer_u.cooked_data.payload.arp.src_paddr;
 				uint8_t *destinationIP = buffer_u.cooked_data.payload.arp.tgt_paddr;
 				
 				printf("Etherner Header:\n");
-				printf("MAC Source: %x:%x:%x:%x:%x:%x\n", sourceMAC[0], sourceMAC[1],sourceMAC[2], sourceMAC[3], sourceMAC[4], sourceMAC[5]);
-				printf("MAC Destination: %x:%x:%x:%x:%x:%x\n", destinationMAC[0], destinationMAC[1],destinationMAC[2], destinationMAC[3], destinationMAC[4], destinationMAC[5]);
-				// printf("IP Source: %d.%d.%d.%d\n", sourceIP[0],sourceIP[1], sourceIP[2], sourceIP[3]);
-				// printf("IP Destination: %d.%d.%d.%d\n", destinationIP[0], destinationIP[1], destinationIP[2], destinationIP[3]);
+				printf("MAC Source: %x:%x:%x:%x:%x:%x\n", e_sourceMAC[0], e_sourceMAC[1],e_sourceMAC[2], e_sourceMAC[3], e_sourceMAC[4], e_sourceMAC[5]);
+				printf("MAC Destination: %x:%x:%x:%x:%x:%x\n", e_destinationMAC[0], e_destinationMAC[1],e_destinationMAC[2], e_destinationMAC[3], e_destinationMAC[4], e_destinationMAC[5]);
+				printf("Protocol Type: %x\n", e_type);
+				printf("\n");
+
+				printf("ARP Header:\n");
+				printf("Hardware Type: %d\n", hardware_type);
+				printf("Protocol Type: %x\n", protocol_type);
+				printf("Hardware Address Length: %d\n", h_address_length);
+				printf("Protocol Address Length: %d\n", p_address_length);
+				printf("ARP Operation: %d\n", arp_operation);
+				printf("MAC Source: %x:%x:%x:%x:%x:%x\n", a_sourceMAC[0], a_sourceMAC[1],a_sourceMAC[2], a_sourceMAC[3], a_sourceMAC[4], a_sourceMAC[5]);
+				printf("MAC Destination: %x:%x:%x:%x:%x:%x\n", a_destinationMAC[0], a_destinationMAC[1],a_destinationMAC[2], a_destinationMAC[3], a_destinationMAC[4], a_destinationMAC[5]);
+				printf("IP Source: %d.%d.%d.%d\n", sourceIP[0],sourceIP[1], sourceIP[2], sourceIP[3]);
+				printf("IP Destination: %d.%d.%d.%d\n", destinationIP[0], destinationIP[1], destinationIP[2], destinationIP[3]);
 				printf("\n");
 				continue;
 			}
