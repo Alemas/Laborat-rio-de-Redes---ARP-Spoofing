@@ -9,13 +9,15 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <netinet/ether.h>
+#include <unistd.h>
 #include "arp.h"
 
+char false_mac[6];
 char src_mac[6];
 char bcast_mac[6] =	{0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
 char src_ip[4] = {10,0,0,20};
-char dst_ip[4] = {10,0,0,22};
+uint8_t dst_ip[4] = {10,0,0,22};
 
 union eth_buffer buffer_u;
 
@@ -26,11 +28,45 @@ int main(int argc, char *argv[])
 	struct sockaddr_ll socket_address;
 	int sockfd, numbytes;
 	
-	/* Get interface name */
-	if (argc > 1)
-		strcpy(ifName, argv[1]);
-	else
-		strcpy(ifName, DEFAULT_IF);
+	/* Get mac and ip from parameters */
+	if (argc > 1) {
+		
+		/* Convert MAC String to Array */
+		char* mac;
+		strcpy(mac, argv[1]);
+		int mac_values[6];
+		int i;
+
+		if( 6 == sscanf( mac, "%x:%x:%x:%x:%x:%x%*c",
+			&mac_values[0], &mac_values[1], &mac_values[2],
+			&mac_values[3], &mac_values[4], &mac_values[5] ) ) {
+			/* convert to uint8_t */
+			for( i = 0; i < 6; i++ ) {
+				false_mac[i] = (uint8_t) mac_values[i];
+			}
+		} else {
+			printf("\nInvalid MAC Address\n");
+			return 0;
+		}
+		
+		/* Convert IP String to Array */
+		char* ip = (char *) malloc(sizeof(argv[2]));
+		strcpy(ip, argv[2]);
+		int ip_values[4];
+		
+		if (4 == sscanf(ip, "%d.%d.%d.%d%*c",
+			&ip_values[0], &ip_values[1], &ip_values[2],
+			&ip_values[3])) {
+			/* convert to uint8_t */
+			for (i = 0; i < 4; ++i)
+				dst_ip[i] = (uint8_t) ip_values[i];
+		} else {
+			printf("\nInvalid IP Address\n");
+			return 0;
+		}
+	}
+	
+	strcpy(ifName, DEFAULT_IF);
 
 	/* Open RAW socket */
 	if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) == -1)
@@ -62,6 +98,8 @@ int main(int argc, char *argv[])
 
 	/* To send data (in this case we will cook an ARP packet and broadcast it =])... */
 	
+	memcpy(src_mac, false_mac, 6);
+	
 	/* fill the Ethernet frame header */
 	memcpy(buffer_u.cooked_data.ethernet.dst_addr, bcast_mac, 6);
 	memcpy(buffer_u.cooked_data.ethernet.src_addr, src_mac, 6);
@@ -83,8 +121,11 @@ int main(int argc, char *argv[])
 	memcpy(buffer_u.cooked_data.payload.arp.tgt_paddr, dst_ip, 4);
 
 	/* Send it.. */
+	while(1) {
 	memcpy(socket_address.sll_addr, bcast_mac, 6);
 		if (sendto(sockfd, buffer_u.raw_data, sizeof(struct eth_hdr) + sizeof(struct arp_packet), 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0)
 			printf("Send failed\n");
-			
+					
+		sleep(1);
+	}
 }	
