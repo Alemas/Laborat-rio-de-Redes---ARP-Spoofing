@@ -12,9 +12,8 @@
 #include "arp.h"
 
 char src_mac[6];
-char dst_mac[6] =	{0x00, 0x00, 0x00, 0xaa, 0x00, 0x02};
+char bcast_mac[6] =	{0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
-char false_mac[6] = {0x00, 0x01, 0x02, 0x03, 0x04, 0x05};
 char src_ip[4] = {10,0,0,20};
 char dst_ip[4] = {10,0,0,22};
 
@@ -34,7 +33,7 @@ int main(int argc, char *argv[])
 		strcpy(ifName, DEFAULT_IF);
 
 	/* Open RAW socket */
-	if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ARP))) == -1)
+	if ((sockfd = socket(AF_PACKET, SOCK_RAW, htons(ETH_P_ALL))) == -1)
 		perror("socket");
 	
 	/* Set interface to promiscuous mode */
@@ -64,7 +63,7 @@ int main(int argc, char *argv[])
 	/* To send data (in this case we will cook an ARP packet and broadcast it =])... */
 	
 	/* fill the Ethernet frame header */
-	memcpy(buffer_u.cooked_data.ethernet.dst_addr, dst_mac, 6);
+	memcpy(buffer_u.cooked_data.ethernet.dst_addr, bcast_mac, 6);
 	memcpy(buffer_u.cooked_data.ethernet.src_addr, src_mac, 6);
 	buffer_u.cooked_data.ethernet.eth_type = htons(ETH_P_ARP);
 
@@ -73,18 +72,18 @@ int main(int argc, char *argv[])
 	buffer_u.cooked_data.payload.arp.prot_type = htons(ETH_P_IP);
 	buffer_u.cooked_data.payload.arp.hlen = 6;
 	buffer_u.cooked_data.payload.arp.plen = 4;
-	buffer_u.cooked_data.payload.arp.operation = htons(2);
+	buffer_u.cooked_data.payload.arp.operation = htons(1);
 	//MAC Source
 	memcpy(buffer_u.cooked_data.payload.arp.src_hwaddr, src_mac, 6);
 	//MAC Destination
-	memcpy(buffer_u.cooked_data.payload.arp.tgt_hwaddr, dst_mac, 6);
+	memset(buffer_u.cooked_data.payload.arp.tgt_hwaddr, 0, 6);
 	//IP Source
 	memcpy(buffer_u.cooked_data.payload.arp.src_paddr, src_ip, 4);
 	//IP Destination
 	memcpy(buffer_u.cooked_data.payload.arp.tgt_paddr, dst_ip, 4);
 
 	/* Send it.. */
-	memcpy(socket_address.sll_addr, dst_mac, 6);
+	memcpy(socket_address.sll_addr, bcast_mac, 6);
 		if (sendto(sockfd, buffer_u.raw_data, sizeof(struct eth_hdr) + sizeof(struct arp_packet), 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0)
 			printf("Send failed\n");
 			
