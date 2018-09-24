@@ -12,12 +12,11 @@
 #include <unistd.h>
 #include "arp.h"
 
-char false_mac[6];
 char src_mac[6];
 char bcast_mac[6] =	{0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 
-char src_ip[4] = {10,0,0,20};
-uint8_t dst_ip[4] = {10,0,0,22};
+uint8_t src_ip[4];
+uint8_t dst_ip[4];
 
 union eth_buffer buffer_u;
 union eth_buffer rcv_buffer_u;
@@ -29,24 +28,23 @@ int main(int argc, char *argv[])
 	struct sockaddr_ll socket_address;
 	int sockfd, numbytes;
 	
-	/* Get mac and ip from parameters */
+	/* Get ips from parameters */
 	if (argc > 1) {
 		
-		/* Convert MAC String to Array */
-		char* mac = (char *) malloc(sizeof(argv[1]));
-		strcpy(mac, argv[1]);
-		int mac_values[6];
-		int i;
-
-		if( 6 == sscanf( mac, "%x:%x:%x:%x:%x:%x%*c",
-			&mac_values[0], &mac_values[1], &mac_values[2],
-			&mac_values[3], &mac_values[4], &mac_values[5] ) ) {
+		/* Convert IP String to Array */
+		char* sip = (char *) malloc(sizeof(argv[1]));
+		strcpy(sip, argv[1]);
+		int src_ip_values[4];
+		int i = 0;
+		
+		if (4 == sscanf(sip, "%d.%d.%d.%d%*c",
+			&src_ip_values[0], &src_ip_values[1], &src_ip_values[2],
+			&src_ip_values[3])) {
 			/* convert to uint8_t */
-			for( i = 0; i < 6; i++ ) {
-				false_mac[i] = (uint8_t) mac_values[i];
-			}
+			for (i = 0; i < 4; ++i)
+				src_ip[i] = (uint8_t) src_ip_values[i];
 		} else {
-			printf("\nInvalid MAC Address\n");
+			printf("\nInvalid Source IP Address\n");
 			return 0;
 		}
 		
@@ -66,9 +64,7 @@ int main(int argc, char *argv[])
 			return 0;
 		}
 	}
-	
-	printf("asiodisao");
-	
+		
 	strcpy(ifName, DEFAULT_IF);
 
 	/* Open RAW socket */
@@ -101,8 +97,6 @@ int main(int argc, char *argv[])
 
 	/* To send data (in this case we will cook an ARP packet and broadcast it =])... */
 	
-	memcpy(src_mac, false_mac, 6);
-	
 	/* fill the Ethernet frame header */
 	memcpy(buffer_u.cooked_data.ethernet.dst_addr, bcast_mac, 6);
 	memcpy(buffer_u.cooked_data.ethernet.src_addr, src_mac, 6);
@@ -129,20 +123,6 @@ int main(int argc, char *argv[])
 		if (sendto(sockfd, buffer_u.raw_data, sizeof(struct eth_hdr) + sizeof(struct arp_packet), 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0)
 			printf("Request send failed\n");
 			
-		numbytes = recvfrom(sockfd, rcv_buffer_u.raw_data, ETH_LEN, 0, NULL, NULL);
-		if (numbytes > 0) {
-			if (rcv_buffer_u.cooked_data.ethernet.eth_type != ntohs(ETH_P_ARP)){
-				uint8_t *e_destinationMAC = rcv_buffer_u.cooked_data.ethernet.dst_addr;
-				for(int i = 0; i < 6; i++) {
-					if (e_destinationMAC[i] != src_mac[i]) {
-						memcpy(rcv_buffer_u.cooked_data.ethernet.dst_addr, false_mac, 6);
-						printf("Reenviei umas paradas\n");
-						if (sendto(sockfd, rcv_buffer_u.raw_data, sizeof(struct eth_hdr) + sizeof(struct arp_packet), 0, (struct sockaddr*)&socket_address, sizeof(struct sockaddr_ll)) < 0)
-							printf("Redirecting failed\n");
-					}
-				}
-			}
-		}
 					
 		sleep(1);
 	}
